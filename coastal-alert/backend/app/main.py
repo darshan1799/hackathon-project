@@ -1,11 +1,17 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
-from . import models, schemas
+from datetime import timedelta
+from . import models, schemas, auth
 from .database import SessionLocal, engine, Base
 from .notifier import notifier
 from .config import settings
+from .auth import (
+    authenticate_user, create_access_token, get_current_active_user,
+    get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -42,8 +48,59 @@ def root():
 def health():
     return {"status": "ok", "service": "Coastal Alert System"}
 
+# Authentication endpoints - Admin only
+@app.post("/api/auth/login", response_model=schemas.Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user
+    }
+
+@app.get("/api/auth/me", response_model=schemas.UserOut)
+async def read_users_me(current_user: models.User = Depends(get_current_active_user)):
+    return current_user
+
 @app.post("/api/contacts", response_model=schemas.ContactOut)
 def create_contact(contact: schemas.ContactCreate, db: Session = Depends(get_db)):
+    # Check for duplicate email if provided
+    if contact.email:
+        existing_email = db.query(models.Contact).filter(models.Contact.email == contact.email).first()
+        if existing_email:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Contact with email '{contact.email}' already exists"
+            )
+    
+    # Check for duplicate phone if provided
+    if contact.phone:
+        existing_phone = db.query(models.Contact).filter(models.Contact.phone == contact.phone).first()
+        if existing_phone:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Contact with phone number '{contact.phone}' already exists"
+            )
+    
+    # At least one contact method required
+    if not contact.email and not contact.phone:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one contact method (email or phone) is required"
+        )
+    
     db_contact = models.Contact(**contact.dict())
     db.add(db_contact)
     db.commit()
@@ -66,6 +123,37 @@ def update_contact(contact_id: int, contact: schemas.ContactCreate, db: Session 
     db_contact = db.query(models.Contact).filter(models.Contact.id == contact_id).first()
     if not db_contact:
         raise HTTPException(status_code=404, detail="Contact not found")
+    
+    # Check for duplicate email if it's being changed
+    if contact.email and contact.email != db_contact.email:
+        existing_email = db.query(models.Contact).filter(
+            models.Contact.email == contact.email,
+            models.Contact.id != contact_id
+        ).first()
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Contact with email '{contact.email}' already exists"
+            )
+    
+    # Check for duplicate phone if it's being changed
+    if contact.phone and contact.phone != db_contact.phone:
+        existing_phone = db.query(models.Contact).filter(
+            models.Contact.phone == contact.phone,
+            models.Contact.id != contact_id
+        ).first()
+        if existing_phone:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Contact with phone number '{contact.phone}' already exists"
+            )
+    
+    # At least one contact method required
+    if not contact.email and not contact.phone:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one contact method (email or phone) is required"
+        )
     
     for key, value in contact.dict().items():
         setattr(db_contact, key, value)

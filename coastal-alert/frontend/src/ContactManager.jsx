@@ -14,6 +14,7 @@ export default function ContactManager() {
   const [selectedCity, setSelectedCity] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     loadContacts()
@@ -30,8 +31,44 @@ export default function ContactManager() {
     setLoading(false)
   }
 
+  function validateForm() {
+    const newErrors = {}
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required'
+    }
+    
+    // At least one contact method required
+    if (!formData.phone && !formData.email) {
+      newErrors.contact = 'At least one contact method (phone or email) is required'
+    }
+    
+    // Phone format validation
+    if (formData.phone && !/^\+?[1-9]\d{1,14}$/.test(formData.phone.replace(/[\s-]/g, ''))) {
+      newErrors.phone = 'Please enter a valid phone number with country code'
+    }
+    
+    // Email format validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+    
+    // Region validation
+    if (!selectedState) {
+      newErrors.region = 'Please select a state/UT'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
+    
+    if (!validateForm()) {
+      return
+    }
     
     // Combine state and city for region
     const region = selectedCity ? `${selectedCity}, ${selectedState}` : selectedState
@@ -47,10 +84,24 @@ export default function ContactManager() {
       setFormData({ name: '', phone: '', email: '', region: '' })
       setSelectedState('')
       setSelectedCity('')
+      setErrors({})
       loadContacts()
     } catch (error) {
       console.error('Failed to save contact:', error)
-      alert('Failed to save contact')
+      
+      // Handle duplicate error messages from backend
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail
+        if (detail.includes('email')) {
+          setErrors({ email: detail })
+        } else if (detail.includes('phone')) {
+          setErrors({ phone: detail })
+        } else {
+          setErrors({ general: detail })
+        }
+      } else {
+        setErrors({ general: 'Failed to save contact. Please try again.' })
+      }
     }
   }
 
@@ -93,6 +144,7 @@ export default function ContactManager() {
     setSelectedState('')
     setSelectedCity('')
     setEditingId(null)
+    setErrors({})
   }
   
   function handleStateChange(e) {
@@ -107,31 +159,68 @@ export default function ContactManager() {
       <div className="contact-form-section">
         <h3>{editingId ? 'Edit Contact' : 'Add New Contact'}</h3>
         <form onSubmit={handleSubmit} className="contact-form">
-          <input
-            type="text"
-            placeholder="Name *"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            required
-          />
-          <input
-            type="tel"
-            placeholder="Phone (with country code)"
-            value={formData.phone}
-            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
-          />
+          {errors.general && (
+            <div className="error-alert">
+              {errors.general}
+            </div>
+          )}
+          {errors.contact && (
+            <div className="error-alert">
+              {errors.contact}
+            </div>
+          )}
+          
+          <div className="form-field">
+            <input
+              type="text"
+              placeholder="Name *"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({...formData, name: e.target.value})
+                if (errors.name) setErrors({...errors, name: ''})
+              }}
+              className={errors.name ? 'error' : ''}
+            />
+            {errors.name && <span className="error-text">{errors.name}</span>}
+          </div>
+          
+          <div className="form-field">
+            <input
+              type="tel"
+              placeholder="Phone (e.g., +1234567890)"
+              value={formData.phone}
+              onChange={(e) => {
+                setFormData({...formData, phone: e.target.value})
+                if (errors.phone) setErrors({...errors, phone: ''})
+                if (errors.contact) setErrors({...errors, contact: ''})
+              }}
+              className={errors.phone ? 'error' : ''}
+            />
+            {errors.phone && <span className="error-text">{errors.phone}</span>}
+          </div>
+          
+          <div className="form-field">
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData({...formData, email: e.target.value})
+                if (errors.email) setErrors({...errors, email: ''})
+                if (errors.contact) setErrors({...errors, contact: ''})
+              }}
+              className={errors.email ? 'error' : ''}
+            />
+            {errors.email && <span className="error-text">{errors.email}</span>}
+          </div>
           <div className="location-selectors">
             <select
               value={selectedState}
-              onChange={handleStateChange}
-              required
-              className="state-select"
+              onChange={(e) => {
+                handleStateChange(e)
+                if (errors.region) setErrors({...errors, region: ''})
+              }}
+              className={`state-select ${errors.region ? 'error' : ''}`}
             >
               <option value="">Select State/UT *</option>
               <optgroup label="West Coast">
@@ -163,6 +252,7 @@ export default function ContactManager() {
                 ))}
               </select>
             )}
+            {errors.region && <span className="error-text">{errors.region}</span>}
           </div>
           <div className="form-buttons">
             <button type="submit" className="btn-primary">

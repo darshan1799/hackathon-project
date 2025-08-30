@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react'
-import { contactsAPI, alertsAPI, systemAPI } from './api'
+import { contactsAPI, alertsAPI, systemAPI, authAPI } from './api'
 import Dashboard from './Dashboard'
 import ContactManager from './ContactManager'
 import AlertSimulator from './AlertSimulator'
 import AlertHistory from './AlertHistory'
+import Login from './Login'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [stats, setStats] = useState(null)
   const [health, setHealth] = useState(null)
+  const [user, setUser] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    checkHealth()
-    loadStats()
+    // Check if user is already logged in
+    const token = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
+    
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser))
+      setIsAuthenticated(true)
+      checkHealth()
+      loadStats()
+    }
   }, [])
 
   async function checkHealth() {
@@ -34,16 +45,43 @@ export default function App() {
     }
   }
 
+  const handleLogin = (userData) => {
+    setUser(userData)
+    setIsAuthenticated(true)
+    checkHealth()
+    loadStats()
+  }
+
+
+  const handleLogout = async () => {
+    await authAPI.logout()
+    setUser(null)
+    setIsAuthenticated(false)
+    setActiveTab('dashboard')
+  }
+
+  // If not authenticated, show admin login
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />
+  }
+
   return (
     <div className="app">
       <header className="header">
         <h1>Coastal Threat Alert System</h1>
         <div className="system-status">
+          <div className="user-info">
+            <span className="user-name">👤 Admin: {user?.name}</span>
+            <span className="admin-badge">Admin</span>
+          </div>
           {health && (
             <span className={`status-badge ${health.status === 'ok' ? 'status-ok' : 'status-error'}`}>
               System: {health.status === 'ok' ? 'Online' : 'Offline'}
             </span>
           )}
+          <button onClick={handleLogout} className="btn-logout">
+            Logout
+          </button>
         </div>
       </header>
 
