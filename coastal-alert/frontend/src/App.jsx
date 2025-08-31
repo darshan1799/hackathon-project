@@ -5,6 +5,7 @@ import ContactManager from './ContactManager'
 import AlertSimulator from './AlertSimulator'
 import AlertHistory from './AlertHistory'
 import Login from './Login'
+import ModelTesting from './components/ModelTesting'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -110,6 +111,12 @@ export default function App() {
         >
           Alert History
         </button>
+        <button 
+          className={activeTab === 'testing' ? 'active' : ''} 
+          onClick={() => setActiveTab('testing')}
+        >
+          Model Testing
+        </button>
       </nav>
 
       <main className="main-content">
@@ -117,6 +124,7 @@ export default function App() {
         {activeTab === 'contacts' && <ContactManager />}
         {activeTab === 'simulator' && <AlertSimulator onAlertSent={loadStats} />}
         {activeTab === 'history' && <AlertHistory />}
+        {activeTab === 'testing' && <ModelTesting />}
       </main>
 
       <footer className="footer">

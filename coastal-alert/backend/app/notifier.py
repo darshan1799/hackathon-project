@@ -7,9 +7,9 @@ from .config import settings
 
 class Notifier:
     def send_sms(self, to: str, message: str):
-        sid = settings.twilio_sid
-        token = settings.twilio_token
-        from_num = settings.twilio_from
+        sid = settings.twilio_account_sid
+        token = settings.twilio_auth_token
+        from_num = settings.twilio_phone_number
         
         if sid and token and from_num:
             try:

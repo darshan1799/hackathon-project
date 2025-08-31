@@ -296,3 +296,315 @@ def get_stats(db: Session = Depends(get_db)):
         "alerts_sent": alerts_sent,
         "thresholds": THRESHOLDS
     }
+
+# API Testing Endpoints - For Model Testing with Dummy Data
+@app.get("/api/test/contacts")
+def get_test_contacts():
+    """Returns dummy contact data for testing purposes"""
+    return [
+        {
+            "id": 101,
+            "name": "Test User 1",
+            "email": "test1@example.com",
+            "phone": "+1234567890",
+            "region": "North Coast",
+            "is_active": True
+        },
+        {
+            "id": 102,
+            "name": "Test User 2",
+            "email": "test2@example.com",
+            "phone": "+1234567891",
+            "region": "South Coast",
+            "is_active": True
+        },
+        {
+            "id": 103,
+            "name": "Test User 3",
+            "email": "test3@example.com",
+            "phone": "+1234567892",
+            "region": "East Coast",
+            "is_active": True
+        },
+        {
+            "id": 104,
+            "name": "Test User 4",
+            "email": "test4@example.com",
+            "phone": "+1234567893",
+            "region": "West Coast",
+            "is_active": True
+        },
+        {
+            "id": 105,
+            "name": "Test User 5",
+            "email": "test5@example.com",
+            "phone": "+1234567894",
+            "region": "Central Region",
+            "is_active": True
+        },
+        {
+            "id": 106,
+            "name": "John Smith",
+            "email": "john.smith@example.com",
+            "phone": "+1234567895",
+            "region": "North Coast",
+            "is_active": True
+        },
+        {
+            "id": 107,
+            "name": "Sarah Johnson",
+            "email": "sarah.j@example.com",
+            "phone": "+1234567896",
+            "region": "South Coast",
+            "is_active": True
+        },
+        {
+            "id": 108,
+            "name": "Mike Davis",
+            "email": "mike.davis@example.com",
+            "phone": "+1234567897",
+            "region": "East Coast",
+            "is_active": True
+        },
+        {
+            "id": 109,
+            "name": "Emily Wilson",
+            "email": "emily.w@example.com",
+            "phone": "+1234567898",
+            "region": "West Coast",
+            "is_active": True
+        },
+        {
+            "id": 110,
+            "name": "Robert Brown",
+            "email": "robert.b@example.com",
+            "phone": "+1234567899",
+            "region": "North Coast",
+            "is_active": True
+        },
+        {
+            "id": 111,
+            "name": "Lisa Anderson",
+            "email": "lisa.anderson@example.com",
+            "phone": "+1234567900",
+            "region": "Central Region",
+            "is_active": True
+        },
+        {
+            "id": 112,
+            "name": "David Martinez",
+            "email": "david.m@example.com",
+            "phone": "+1234567901",
+            "region": "South Coast",
+            "is_active": True
+        },
+        {
+            "id": 113,
+            "name": "Jennifer Taylor",
+            "email": "jennifer.t@example.com",
+            "phone": "+1234567902",
+            "region": "East Coast",
+            "is_active": True
+        },
+        {
+            "id": 114,
+            "name": "William Jones",
+            "email": "william.jones@example.com",
+            "phone": "+1234567903",
+            "region": "West Coast",
+            "is_active": True
+        },
+        {
+            "id": 115,
+            "name": "Maria Garcia",
+            "email": "maria.g@example.com",
+            "phone": "+1234567904",
+            "region": "North Coast",
+            "is_active": True
+        },
+        {
+            "id": 116,
+            "name": "James Miller",
+            "email": "james.miller@example.com",
+            "phone": "+1234567905",
+            "region": "South Coast",
+            "is_active": True
+        },
+        {
+            "id": 117,
+            "name": "Patricia Lee",
+            "email": "patricia.lee@example.com",
+            "phone": "+1234567906",
+            "region": "Central Region",
+            "is_active": True
+        },
+        {
+            "id": 118,
+            "name": "Christopher White",
+            "email": "chris.white@example.com",
+            "phone": "+1234567907",
+            "region": "East Coast",
+            "is_active": True
+        },
+        {
+            "id": 119,
+            "name": "Nancy Harris",
+            "email": "nancy.h@example.com",
+            "phone": "+1234567908",
+            "region": "West Coast",
+            "is_active": True
+        },
+        {
+            "id": 120,
+            "name": "Daniel Clark",
+            "email": "daniel.clark@example.com",
+            "phone": "+1234567909",
+            "region": "North Coast",
+            "is_active": True
+        },
+        {
+            "id": 121,
+            "name": "Karen Lewis",
+            "email": "karen.lewis@example.com",
+            "phone": "+1234567910",
+            "region": "South Coast",
+            "is_active": True
+        },
+        {
+            "id": 122,
+            "name": "Thomas Robinson",
+            "email": "thomas.r@example.com",
+            "phone": "+1234567911",
+            "region": "Central Region",
+            "is_active": True
+        },
+        {
+            "id": 123,
+            "name": "Sandra Walker",
+            "email": "sandra.walker@example.com",
+            "phone": "+1234567912",
+            "region": "East Coast",
+            "is_active": True
+        },
+        {
+            "id": 124,
+            "name": "Kevin Hall",
+            "email": "kevin.hall@example.com",
+            "phone": "+1234567913",
+            "region": "West Coast",
+            "is_active": True
+        },
+        {
+            "id": 125,
+            "name": "Angela Young",
+            "email": "angela.young@example.com",
+            "phone": "+1234567914",
+            "region": "North Coast",
+            "is_active": True
+        }
+    ]
+
+@app.post("/api/test/alert")
+def trigger_test_alert(alert: schemas.AlertIn, db: Session = Depends(get_db)):
+    """
+    Test endpoint that simulates alert processing without actually sending notifications.
+    Returns what would be sent without actually sending.
+    """
+    metric = alert.metric
+    value = alert.value
+    threshold = THRESHOLDS.get(metric)
+    
+    if threshold is None:
+        raise HTTPException(status_code=400, detail=f"Unknown metric: {metric}. Available metrics: {list(THRESHOLDS.keys())}")
+
+    severity = "CRITICAL" if value > threshold * 1.5 else "HIGH" if value > threshold else "NORMAL"
+    
+    # Create log entry but mark as test
+    log = models.AlertLog(
+        metric=f"TEST_{metric}",
+        value=value,
+        threshold=threshold,
+        message="TEST MODE - No actual notifications sent",
+        sent=False
+    )
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+
+    test_contacts = get_test_contacts()
+    notifications_to_send = []
+
+    if value > threshold:
+        location_str = f" at {alert.location}" if alert.location else ""
+        msg = f"COASTAL THREAT ALERT [{severity}]\\n"
+        msg += f"Metric: {metric.replace('_', ' ').title()}\\n"
+        msg += f"Current: {value:.2f} (Threshold: {threshold:.2f})\\n"
+        msg += f"Location: {alert.location or 'Coastal Region'}\\n"
+        msg += f"Take immediate precautions!"
+        
+        log.message = f"TEST MODE: {msg}"
+        
+        # Filter test contacts by location if specified
+        filtered_contacts = test_contacts
+        if alert.location:
+            if '|' in alert.location:
+                locations = alert.location.split('|')
+                filtered_contacts = [c for c in test_contacts if any(loc.strip().lower() in c['region'].lower() for loc in locations)]
+            else:
+                filtered_contacts = [c for c in test_contacts if alert.location.lower() in c['region'].lower()]
+        
+        # Simulate notifications
+        for contact in filtered_contacts:
+            notification = {
+                "contact_id": contact['id'],
+                "contact_name": contact['name'],
+                "methods": []
+            }
+            
+            if contact['phone']:
+                notification['methods'].append({
+                    "type": "SMS",
+                    "to": contact['phone'],
+                    "message": msg
+                })
+            
+            if contact['email']:
+                notification['methods'].append({
+                    "type": "EMAIL",
+                    "to": contact['email'],
+                    "subject": f"[{severity}] Coastal Threat Alert - {metric.replace('_', ' ').title()}",
+                    "message": msg
+                })
+            
+            notifications_to_send.append(notification)
+        
+        db.commit()
+        
+        return {
+            "status": "TEST_MODE",
+            "severity": severity,
+            "metric": metric,
+            "value": value,
+            "threshold": threshold,
+            "exceeded": True,
+            "message": msg,
+            "location_filter": alert.location,
+            "contacts_to_notify": len(filtered_contacts),
+            "notifications": notifications_to_send,
+            "log_id": log.id,
+            "note": "This is a test simulation. No actual notifications were sent."
+        }
+    else:
+        return {
+            "status": "TEST_MODE",
+            "severity": severity,
+            "metric": metric,
+            "value": value,
+            "threshold": threshold,
+            "exceeded": False,
+            "message": f"Value {value} is within normal range (threshold: {threshold})",
+            "contacts_to_notify": 0,
+            "notifications": [],
+            "log_id": log.id,
+            "note": "This is a test simulation. Value is below threshold."
+        }

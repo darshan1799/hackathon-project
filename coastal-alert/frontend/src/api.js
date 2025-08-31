@@ -69,3 +69,8 @@ export const authAPI = {
     return Promise.resolve()
   }
 }
+
+export const testAPI = {
+  getTestContacts: () => api.get('/test/contacts').then(r => r.data),
+  triggerTestAlert: (data) => api.post('/test/alert', data).then(r => r.data)
+}
